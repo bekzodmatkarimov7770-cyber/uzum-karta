@@ -21,6 +21,9 @@ KEYINGI RASMLAR — har biri xaridorning bitta savoliga javob beradi:
 
 MATN:
 - O'zbek tilida, lotin yozuvida, xatosiz. Sarlavha 2–4 so'z.
+- Faqat oddiy xaridor tushunadigan narsalar. Texnik ichki ma'lumotlar YO'Q: batareya yacheykalari (3S1P, "3 hujayra"), chipset kodi, TDP, voltaj, PCIe versiyasi, model kodlari ro'yxati.
+- Har bir raqamning yonida u nima berishi yozilsin: "1,64 kg — sumkada sezilmaydi", "MIL-STD-810H — zarba va titrashga chidamli". Tushuntirib bo'lmaydigan raqamni umuman yozma.
+- "dan", "gacha" kabi noaniq qo'shimchalarsiz, aniq va ishonchli yoz.
 - Har bir xususiyat + foyda: "42 Wh — butun dars kuniga yetadi". Raqamlar faqat rasmiy ma'lumotdan.
 - Bir rasmda bitta asosiy fikr, ko'pi bilan 4 ta blok. Bir gap ikki rasmda takrorlanmasin.
 - Telefon ekranida 1 soniyada o'qilsin: yozuv katta, fon bilan kuchli kontrast.
@@ -155,6 +158,7 @@ Reply with ONLY one JSON object:
  "listing":{"titleUz":"","titleRu":"","shortUz":"","shortRu":"","descUz":"","descRu":"","specs":[{"uz":"","ru":"","v":""}]}}
 cards: exactly ${n}. "product" is the rectangle (fractions of a 3:4 portrait canvas, x,y = top-left) where the real laptop stands; the laptop is bottom-aligned in it. Use null only for a card that should show no product. Keep texts outside that rectangle. On the first card the product rectangle is at least 0.75 wide.
 texts: at most 6 items per card, each at most 36 characters. Every number must come from the official data or the seller's words.
+PLAIN LANGUAGE (hard rule): every text must be instantly clear to an ordinary buyer with no technical knowledge. Never put internal engineering details on a card: battery cell configuration (e.g. 3S1P, number of cells), chipset or part codes, TDP, voltage, PCIe generation, bus speeds. Pick only the 3-4 facts a buyer actually compares (size, weight, battery life or Wh, RAM, storage, screen, ports, durability) and pair each number with its everyday benefit in a few words. If a fact cannot be explained simply, leave it out.
 listing: titleUz/titleRu follow the seller's naming rule; descriptions 600-1200 characters, natural, no keyword stuffing; specs from the official data.`;
 }
 function cardPrompt(s){
@@ -187,7 +191,7 @@ Its purpose: ${s.goal||''}
 The seller's rules:
 ${getRules()}
 The laptop in the image is the real product photo placed on top of an AI background, so do not judge the laptop itself. Judge only the background, the texts and how they work together with the product.
-Check: 1) every text is present and spelled exactly, no garbled letters, no extra words; 2) no other device, fake logo or brand symbol is painted in the background; 3) texts do not overlap or hide behind the product; 4) numbers match the official data; 5) every seller rule is respected; 6) would it make a buyer click and buy — clear, readable, attractive.
+Check: 1) every text is present and spelled exactly, no garbled letters, no extra words; 2) no other device, fake logo or brand symbol is painted in the background; 3) texts do not overlap or hide behind the product; 4) numbers match the official data; 5) every seller rule is respected; any technical jargon a normal buyer would not understand (cell configuration like 3S1P, part codes, unexplained abbreviations) is a problem; 6) would it make a buyer click and buy — clear, readable, attractive.
 Reply with ONLY JSON {"score":1-10,"ok":true or false,"problems":["Uzbek Latin, short"],"fix":"English instructions for the background/text image model to fix the problems, empty if ok"}`,[await smallBlob(slideCanvas(i),1000)],sig);
   return d&&typeof d==='object'?d:null;
 }
