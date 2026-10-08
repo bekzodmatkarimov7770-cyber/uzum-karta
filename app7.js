@@ -52,7 +52,7 @@ function setRules(v){try{localStorage.setItem(RULES_KEY,v)}catch{}}
   const st=document.createElement('style');
   st.textContent='#aiGo,#aiAuto,#aiGenImgs,#aiAllPrompts,#aiPlaceLbl,#aiReview{display:none!important}#aiRules{font-size:13px;line-height:1.45}';
   document.head.appendChild(st);
-  $('#aiPanel h2').textContent='AI bilan yaratish — model nomini yozing, kartochkani AI sizning mezonlaringiz bo‘yicha o‘zi yaratadi';
+  $('#aiPanel h2').textContent='AI bilan yaratish (versiya 6: haqiqiy surat + asl logotip) — model nomini yozing, kartochkani AI sizning mezonlaringiz bo‘yicha o‘zi yaratadi';
   $('#aiPanel .ai-grid').insertAdjacentHTML('afterend',`<details id="rulesBox"><summary>Mening mezonlarim (AI faqat shularga amal qiladi)</summary>
     <label style="margin-top:8px">O'zgarishlar shu brauzerda saqlanadi.<textarea id="aiRules" rows="16"></textarea></label>
     <div class="btns"><button class="btn sm ghost" id="rulesReset">Boshlang‘ich mezonlarni tiklash</button></div></details>`);
