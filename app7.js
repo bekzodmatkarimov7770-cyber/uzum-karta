@@ -103,6 +103,50 @@ function productRect(s,img){
   return{x:cx-dw/2,y:bottom-dh,w:dw,h:dh};
 }
 
+/* ---- real brand logo: never typed or drawn by the AI ---- */
+const BRANDS=['asus','lenovo','hp','acer','dell','apple','msi','huawei','samsung','xiaomi','honor','gigabyte','microsoft','infinix','tecno','chuwi'];
+const BUILTIN_LOGO={asus:'/logos/asus.png'};
+function brandOf(t){const m=String(t||'').toLowerCase().match(new RegExp('(^|[^a-z])('+BRANDS.join('|')+')([^a-z]|$)'));return m?m[2]:''}
+async function ensureLogo(input,R,sig){
+  const brand=brandOf(input);
+  if(P.brand.logoImg&&IMG[P.brand.logoImg]&&(!P.brand.logoAuto||P.brand.logoBrand===brand))return true;
+  P.brand.logoImg=null;P.brand.logoAuto=false;
+  const take=async url=>{const id=await addDataUrl(url);P.brand.logoImg=id;P.brand.logoAuto=true;P.brand.logoBrand=brand;renderBrand();return true};
+  if(BUILTIN_LOGO[brand]){try{const b=await(await fetch(BUILTIN_LOGO[brand])).blob();return await take(await blobToDataURL(b))}catch{}}
+  const u=R&&typeof R.logo==='string'&&/^https:\/\//.test(R.logo)?R.logo:null;
+  if(u){try{const r=await api({action:'fetchimg',url:u},sig);return await take(r.dataUrl)}catch(e){if(e.code==='cancelled')throw e}}
+  return false;
+}
+const LOGOC={};
+function logoMark(color){
+  const id=P.brand.logoImg,src=id&&IMG[id];if(!src||!src.width)return null;
+  const key=id+'|'+color;if(LOGOC[key])return LOGOC[key];
+  const sc=Math.min(1,1200/Math.max(src.width,src.height)),w=Math.max(1,Math.round(src.width*sc)),h=Math.max(1,Math.round(src.height*sc));
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(src,0,0,w,h);
+  const d=x.getImageData(0,0,w,h),a=d.data,N=w*h;
+  let transparent=0,sat=0,cnt=0,lightBg=0,edge=0;
+  for(let p=0;p<N;p++){const i=p*4;if(a[i+3]<20){transparent++;continue}const mx=Math.max(a[i],a[i+1],a[i+2]),mn=Math.min(a[i],a[i+1],a[i+2]);if(mx<235){sat+=mx-mn;cnt++}}
+  for(let i=0;i<w;i++)for(const j of[0,h-1]){const q=(j*w+i)*4;edge++;if(a[q+3]<20||(a[q]>225&&a[q+1]>225&&a[q+2]>225))lightBg++}
+  const mono=cnt===0||sat/cnt<40,hasAlpha=transparent>N*.05;
+  if(mono){
+    const m=/^#([0-9a-f]{6})$/i.exec(color||'')?parseInt(color.slice(1),16):0x111111,R=m>>16&255,G=m>>8&255,B=m&255;
+    for(let p=0;p<N;p++){const i=p*4;const lum=.299*a[i]+.587*a[i+1]+.114*a[i+2];
+      const al=hasAlpha?a[i+3]:(lightBg>edge*.8?Math.max(0,Math.min(255,(235-lum)*255/175)):255);
+      a[i]=R;a[i+1]=G;a[i+2]=B;a[i+3]=al}
+    x.putImageData(d,0,0);
+  }
+  let x0=w,y0=h,x1=0,y1=0;x.getImageData(0,0,w,h).data.forEach((v,i)=>{if(i%4===3&&v>30){const p=i>>2,px=p%w,py=(p-px)/w;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py}});
+  if(x1<=x0||y1<=y0)return null;
+  const t=document.createElement('canvas');t.width=x1-x0+1;t.height=y1-y0+1;t.getContext('2d').drawImage(c,x0,y0,t.width,t.height,0,0,t.width,t.height);
+  return LOGOC[key]=t;
+}
+function drawLogo(ctx,s){
+  const b=s.lbox;if(!b)return;const L=logoMark(s.lcolor);if(!L)return;
+  const sc=Math.max(.5,Math.min(1.6,parseFloat(s.lS)||1)),bw=b.w*W*sc,bh=b.h*H*sc,k=Math.min(bw/L.width,bh/L.height),dw=L.width*k,dh=L.height*k;
+  const x=b.x<.3?b.x*W:(b.x+b.w/2)*W-dw/2;
+  ctx.drawImage(L,x,(b.y+b.h/2)*H-dh/2,dw,dh);
+}
+
 /* free cards: AI background + the real product on top */
 const _renderV2=render;
 render=function(ctx,s,preview){
@@ -116,6 +160,7 @@ render=function(ctx,s,preview){
     ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(r.x+r.w/2,r.y+r.h,r.w*.55,r.h*.07,0,0,Math.PI*2);ctx.fill();ctx.restore();
     ctx.drawImage(C.img,r.x,r.y,r.w,r.h);
   }
+  drawLogo(ctx,s);
 };
 const _renderEditorV2=renderEditor;
 renderEditor=function(){
@@ -125,6 +170,7 @@ renderEditor=function(){
   let h=`<div class="ed-top"><strong>${CUR+1}-rasm</strong><div class="btns"><button class="btn sm" data-act="up" aria-label="Chapga surish">←</button><button class="btn sm" data-act="down" aria-label="O'ngga surish">→</button><button class="btn sm" data-act="del">O‘chirish</button></div></div>`;
   if(s.goal)h+=`<p class="hint"><b>Maqsad:</b> ${esc(s.goal)}</p>`;
   if(s.pbox)h+=`<div class="sub">Mahsulot (haqiqiy surat)</div><div class="row3"><label>Kattaligi<input type="range" data-k="pS" min="0.5" max="1.5" step="0.02" value="${v('pS',1)}"></label><label>Chap ↔ o‘ng<input type="range" data-k="pX" min="-0.4" max="0.4" step="0.01" value="${v('pX',0)}"></label><label>Yuqori ↕ past<input type="range" data-k="pY" min="-0.4" max="0.4" step="0.01" value="${v('pY',0)}"></label></div>`;
+  if(s.lbox)h+=`<label>Logotip kattaligi<input type="range" data-k="lS" min="0.5" max="1.6" step="0.02" value="${v('lS',1)}"></label>`;
   h+=IMGF('Fon (AI)','bg',s.bg,'data-img');
   if(Array.isArray(s.texts)&&s.texts.length)h+=`<p class="hint"><b>Rasmdagi matn:</b> ${s.texts.map(t=>'«'+esc(t)+'»').join(', ')}</p>`;
   h+=`<label>Nimani o‘zgartirish kerak? (ixtiyoriy)<textarea id="freeFix" rows="3" placeholder="Masalan: fon ochroq bo‘lsin, '42 Wh' yozuvi kattaroq"></textarea></label>
@@ -155,11 +201,14 @@ ${rules}
 
 You decide the whole design yourself: composition, colours, typography, icons, text placement. There is no template.
 How the image is made: an image model paints the card (background, scene, texts, icons) WITHOUT the product. Then the real product photo (cut out, with its real logo) is placed into the rectangle you give in "product". So never ask the image model to draw the product, and keep that rectangle free of text.
+The brand logo is also a real image file placed by the studio into the rectangle you give in "logo" (logoColor = a single hex colour with strong contrast to the background there). NEVER write the brand name (e.g. ASUS, Lenovo) as text anywhere: not in texts, not in the design. The model/series name (e.g. "ExpertBook B1") is fine as text. Give the first card a logo rectangle; other cards may use null.
 Reply with ONLY one JSON object:
 {"style":"English, 1-2 sentences: the shared visual style of the whole set (palette with hex colours, background, typography, decoration) chosen for this brand",
  "cards":[{"goal":"Uzbek Latin, which buyer question this image answers",
    "texts":["every text that must appear on the image, exactly as printed, Uzbek Latin; a model name may stay in English"],
    "product":{"x":0.1,"y":0.3,"w":0.8,"h":0.45},
+   "logo":{"x":0.07,"y":0.06,"w":0.4,"h":0.06},
+   "logoColor":"#ffffff",
    "design":"English, detailed art direction for the background and texts only: scene/surface, where each text goes, size hierarchy, icons, colours. Describe the product area as an empty, clean surface where a laptop will stand."}],
  "listing":{"titleUz":"","titleRu":"","shortUz":"","shortRu":"","descUz":"","descRu":"","specs":[{"uz":"","ru":"","v":""}]}}
 cards: exactly ${n}. "product" is the rectangle (fractions of a 3:4 portrait canvas, x,y = top-left) where the real laptop stands; the laptop is bottom-aligned in it. Use null only for a card that should show no product. Keep texts outside that rectangle. On the first card the product rectangle is at least 0.75 wide.
@@ -172,9 +221,11 @@ function cardPrompt(s){
   /* canvas 1080x1440 is a centre crop of the 1024x1536 image: 1440 px of 1620 px height */
   const iy=v=>Math.round((v*1440+90)/1620*100);
   const area=b?`Leave the rectangle from ${Math.round(b.x*100)}% to ${Math.round((b.x+b.w)*100)}% of the width and from ${iy(b.y)}% to ${iy(b.y+b.h)}% of the height completely EMPTY: only the plain continuous surface or background there, with no text, icons, objects or shadows. A real product photo will be placed there later, standing on the surface at the bottom of that rectangle.`:'This card has no product.';
+  const lb=s.lbox,larea=lb?`\nAlso leave the rectangle from ${Math.round(lb.x*100)}% to ${Math.round((lb.x+lb.w)*100)}% of the width and from ${iy(lb.y)}% to ${iy(lb.y+lb.h)}% of the height EMPTY (plain background): the real brand logo will be placed there.`:'';
   return `Create the background and text layer of one vertical product card for Uzum Market (marketplace in Uzbekistan).
 DO NOT draw any laptop, computer, phone, screen device or product anywhere. DO NOT draw any brand logo or brand symbol.
-${area}
+${area}${larea}
+Never write any brand name or brand logo as text or graphics.
 Overall style of the set: ${P.freeStyle||'clean, modern, premium marketplace card'}
 This card: ${s.design}
 Print exactly these texts and no other words, spelled letter by letter exactly as given (Uzbek Latin, keep apostrophes), as clean typography, not as logos:
@@ -197,7 +248,7 @@ Its purpose: ${s.goal||''}
 The seller's rules:
 ${getRules()}
 The laptop in the image is the real product photo placed on top of an AI background, so do not judge the laptop itself. Judge only the background, the texts and how they work together with the product.
-Check: 1) every text is present and spelled exactly, no garbled letters, no extra words; 2) no other device, fake logo or brand symbol is painted in the background; 3) texts do not overlap or hide behind the product; 4) numbers match the official data; 5) every seller rule is respected; any technical jargon a normal buyer would not understand (cell configuration like 3S1P, part codes, unexplained abbreviations) is a problem; 6) would it make a buyer click and buy — clear, readable, attractive.
+Check: 1) every text is present and spelled exactly, no garbled letters, no extra words; 2) no other device, fake logo or brand symbol is painted in the background, and the brand name is not typed as plain text (the real logo image is placed by the studio); 3) texts do not overlap or hide behind the product; 4) numbers match the official data; 5) every seller rule is respected; any technical jargon a normal buyer would not understand (cell configuration like 3S1P, part codes, unexplained abbreviations) is a problem; 6) would it make a buyer click and buy — clear, readable, attractive.
 Reply with ONLY JSON {"score":1-10,"ok":true or false,"problems":["Uzbek Latin, short"],"fix":"English instructions for the background/text image model to fix the problems, empty if ok"}`,[await smallBlob(slideCanvas(i),1000)],sig);
   return d&&typeof d==='object'?d:null;
 }
@@ -212,7 +263,7 @@ $('#aiFree').addEventListener('click',async()=>{
   const sources=[],rules=$('#aiRules').value.trim()||DEFAULT_RULES;let R=null,redone=0;
   try{
     aiStatus('1/5 Internetdan rasmiy xususiyatlar va mahsulot surati qidirilmoqda…');
-    try{const r=await api({action:'research',model:P.brand.llm,prompt:researchPrompt(input)},sig);R=parseLoose(r.text)}catch(e){if(e.code==='cancelled')throw e;R=null}
+    try{const r=await api({action:'research',model:P.brand.llm,prompt:researchPrompt(input)+'\nAlso add the key "logo": a direct https URL of the official brand logo image file (PNG or SVG, transparent or white background) from the manufacturer\'s website or Wikimedia Commons; empty string if not found.'},sig);R=parseLoose(r.text)}catch(e){if(e.code==='cancelled')throw e;R=null}
     if(R&&Array.isArray(R.sources))sources.push(...R.sources.map(String).filter(u=>/^https?:\/\//.test(u)).slice(0,5));
     if(P.brand.refImg&&P.brand.refAuto===P.brand.refImg&&P.source!==input)P.brand.refImg=null;
     if(!P.brand.refImg||!IMG[P.brand.refImg]){
@@ -229,16 +280,19 @@ $('#aiFree').addEventListener('click',async()=>{
       aiStatus('Mahsulot suratining foni bir xil emas, noutbukni toza kesib bo‘lmadi. Chap paneldagi “Mahsulotning haqiqiy rasmi” ga oq yoki shaffof fondagi (PNG) surat yuklab, tugmani qayta bosing.');
       return;
     }
+    aiStatus('1/5 Brend logotipi tayyorlanmoqda…');
+    const hasLogo=await ensureLogo(input,R,sig);
     const facts=R?formatFacts(R):'';
     aiStatus('2/5 AI mezonlaringiz bo‘yicha kartochkalarni loyihalayapti…');
     const plan=await llmJSON(planPrompt(input,facts,$('#aiNotes').value.trim(),n,rules),[],sig);
     if(!plan||!Array.isArray(plan.cards)||!plan.cards.length)throw{code:'invalid_json'};
     snapshot();
     const str=(v,m)=>String(v??'').slice(0,m);
-    const box=b=>{if(!b||typeof b!=='object')return null;const f=(v,lo,hi)=>Math.max(lo,Math.min(hi,+v||0));const x=f(b.x,0,.9),y=f(b.y,0,.9);const w=f(b.w,.1,1-x),h=f(b.h,.1,1-y);return{x,y,w,h}};
+    const brand=brandOf(input),stripBrand=t=>brand?t.replace(new RegExp('\\b'+brand+'\\b','ig'),'').replace(/\s{2,}/g,' ').trim():t;
+    const box=b=>{if(!b||typeof b!=='object')return null;const f=(v,lo,hi)=>Math.max(lo,Math.min(hi,+v||0));const x=f(b.x,0,.9),y=f(b.y,0,.9);const w=f(b.w,.05,1-x),h=f(b.h,.03,1-y);return{x,y,w,h}};
     P.freeStyle=str(plan.style,600);P.source=input;P.facts=facts;
     if(R&&R.productEn)P.brand.productEn=str(R.productEn,200);
-    P.slides=plan.cards.slice(0,n).map(c=>ensure({layout:'free',goal:str(c&&c.goal,200),texts:(Array.isArray(c&&c.texts)?c.texts:[]).map(t=>str(t,60)).filter(Boolean).slice(0,8),pbox:box(c&&c.product),pS:1,pX:0,pY:0,design:str(c&&c.design,1500),bg:null,lighten:false,tagline:'',s1:'',s2:'',scene:''}));
+    P.slides=plan.cards.slice(0,n).map(c=>ensure({layout:'free',goal:str(c&&c.goal,200),texts:(Array.isArray(c&&c.texts)?c.texts:[]).map(t=>stripBrand(str(t,60))).filter(Boolean).slice(0,8),pbox:box(c&&c.product),lbox:hasLogo?box(c&&c.logo):null,lcolor:/^#[0-9a-f]{6}$/i.test(String(c&&c.logoColor))?c.logoColor:'#111111',lS:1,pS:1,pX:0,pY:0,design:str(c&&c.design,1500),bg:null,lighten:false,tagline:'',s1:'',s2:'',scene:''}));
     const l=plan.listing&&typeof plan.listing==='object'?plan.listing:null;
     if(l){const sp=Array.isArray(l.specs)?l.specs.filter(x=>x&&x.v):[];
       P.listing={titleUz:str(l.titleUz,200),titleRu:str(l.titleRu,200),shortUz:str(l.shortUz,600),shortRu:str(l.shortRu,600),descUz:str(l.descUz,4000),descRu:str(l.descRu,4000),
@@ -269,6 +323,7 @@ $('#aiFree').addEventListener('click',async()=>{
     checks.forEach((c,i)=>{if(!c)return;const bad=c.ok===false||+c.score<8;
       rep.push(`<li><span><span class="tag${bad?' warn':''}">${i+1}-rasm · ${esc(String(c.score??'?'))}/10</span>${bad?esc((c.problems||[]).join('; ')||'Ko‘rib chiqing'):'Mezonlarga mos'}</span></li>`)});
     if(R&&R.notes)rep.push(`<li><span><span class="tag warn">Rasmiy ma’lumot</span>${esc(R.notes)}</span></li>`);
+    if(!hasLogo)rep.push(`<li><span><span class="tag warn">Logotip</span>Brend logotipi topilmadi. Chap paneldagi “Logotip PNG” ga asl logotipni yuklab, qayta yarating.</span></li>`);
     if(!facts)rep.push(`<li><span><span class="tag warn">Diqqat</span>Rasmiy xususiyatlar topilmadi, faqat siz yozgan ma’lumot ishlatildi.</span></li>`);
     if(sources.length)rep.push(`<li><span class="hint">Manbalar: ${sources.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//,'').slice(0,50))}</a>`).join(', ')}</span></li>`);
     rep.push('</ul>');

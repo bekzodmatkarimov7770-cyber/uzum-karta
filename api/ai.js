@@ -112,7 +112,7 @@ async function fetchImg(b) {
   const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36', Accept: 'image/*' }, redirect: 'follow' });
   if (!r.ok) throw fail(502, `Rasm yuklanmadi (${r.status})`);
   const type = (r.headers.get('content-type') || '').split(';')[0].trim();
-  if (!/^image\/(jpeg|png|webp|gif|avif)$/.test(type)) throw fail(415, 'Bu rasm emas');
+  if (!/^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/.test(type)) throw fail(415, 'Bu rasm emas');
   const buf = Buffer.from(await r.arrayBuffer());
   if (buf.length > MAX_IMG) throw fail(413, 'Rasm juda katta');
   return { dataUrl: `data:${type};base64,${buf.toString('base64')}` };
