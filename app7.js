@@ -24,6 +24,12 @@ MATN:
 - Faqat oddiy xaridor tushunadigan narsalar. Texnik ichki ma'lumotlar YO'Q: batareya yacheykalari (3S1P, "3 hujayra"), chipset kodi, TDP, voltaj, PCIe versiyasi, model kodlari ro'yxati.
 - Har bir raqamning yonida u nima berishi yozilsin: "1,64 kg — sumkada sezilmaydi", "MIL-STD-810H — zarba va titrashga chidamli". Tushuntirib bo'lmaydigan raqamni umuman yozma.
 - "dan", "gacha" kabi noaniq qo'shimchalarsiz, aniq va ishonchli yoz.
+- Xaridor oddiy odam: sodda, kundalik o'zbek tilida, xuddi bozorda sotuvchi tushuntirgandek yoz. Avval FOYDA katta harf bilan, raqam esa uning tagida kichikroq:
+  "Kun bo'yi zaryadsiz ishlaydi" — 42 Wh batareya
+  "Yengil, sumkada sezilmaydi" — 1,64 kg
+  "Tushib ketsa ham buzilmaydi" — harbiy standart MIL-STD-810H
+  "Qotmaydi, tez ishlaydi" — 16 GB operativ xotira
+- Inglizcha va texnik so'zlarni iloji boricha o'zbekcha tushuntir (RAM — operativ xotira, SSD — tezkor xotira).
 - Har bir xususiyat + foyda: "42 Wh — butun dars kuniga yetadi". Raqamlar faqat rasmiy ma'lumotdan.
 - Bir rasmda bitta asosiy fikr, ko'pi bilan 4 ta blok. Bir gap ikki rasmda takrorlanmasin.
 - Telefon ekranida 1 soniyada o'qilsin: yozuv katta, fon bilan kuchli kontrast.
@@ -158,7 +164,7 @@ Reply with ONLY one JSON object:
  "listing":{"titleUz":"","titleRu":"","shortUz":"","shortRu":"","descUz":"","descRu":"","specs":[{"uz":"","ru":"","v":""}]}}
 cards: exactly ${n}. "product" is the rectangle (fractions of a 3:4 portrait canvas, x,y = top-left) where the real laptop stands; the laptop is bottom-aligned in it. Use null only for a card that should show no product. Keep texts outside that rectangle. On the first card the product rectangle is at least 0.75 wide.
 texts: at most 6 items per card, each at most 36 characters. Every number must come from the official data or the seller's words.
-PLAIN LANGUAGE (hard rule): every text must be instantly clear to an ordinary buyer with no technical knowledge. Never put internal engineering details on a card: battery cell configuration (e.g. 3S1P, number of cells), chipset or part codes, TDP, voltage, PCIe generation, bus speeds. Pick only the 3-4 facts a buyer actually compares (size, weight, battery life or Wh, RAM, storage, screen, ports, durability) and pair each number with its everyday benefit in a few words. If a fact cannot be explained simply, leave it out.
+PLAIN LANGUAGE (hard rule): every text must be instantly clear to an ordinary buyer with no technical knowledge. Never put internal engineering details on a card: battery cell configuration (e.g. 3S1P, number of cells), chipset or part codes, TDP, voltage, PCIe generation, bus speeds. Pick only the 3-4 facts a buyer actually compares (size, weight, battery life or Wh, RAM, storage, screen, ports, durability) and lead with the everyday benefit in simple spoken Uzbek, as a market seller would say it to an ordinary customer (e.g. "Kun bo'yi zaryadsiz ishlaydi"), and put the number under it as smaller proof (e.g. "42 Wh batareya"). The buyer only pays for a benefit he understands. If a fact cannot be explained simply, leave it out.
 listing: titleUz/titleRu follow the seller's naming rule; descriptions 600-1200 characters, natural, no keyword stuffing; specs from the official data.`;
 }
 function cardPrompt(s){
