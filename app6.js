@@ -33,7 +33,7 @@ async function findRefPhoto(input,R,sig){
     let id;
     try{const r=await api({action:'fetchimg',url:u},sig);id=await addDataUrl(r.dataUrl)}catch(e){if(e.code==='cancelled')throw e;continue}
     try{
-      const v=await llmJSON(`Is this photo a clean product photo of "${input}" (same model family and colour), usable as the reference for marketing images? Reject collages, photos with large text or price banners, a different product, or tiny/blurry images. Reply with ONLY JSON {"ok":true or false,"why":"short reason"}`,[await smallBlob(IMG[id],800)],sig);
+      const v=await llmJSON(`Is this photo a clean product photo of "${input}" (same model family and colour), usable as the reference for marketing images? The product must stand on a plain white or light uniform background (it will be cut out automatically). Reject photos with a scene or busy background, collages, photos with large text or price banners, a different product, or tiny/blurry images. Reply with ONLY JSON {"ok":true or false,"why":"short reason"}`,[await smallBlob(IMG[id],800)],sig);
       if(v&&v.ok)return id;
     }catch(e){if(e.code==='cancelled')throw e}
   }
