@@ -1,47 +1,90 @@
-<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Uzum Kartochka Studiyasi</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,800;1,900&family=Caveat:wght@700&family=Kaushan+Script&family=Onest:wght@400;500;600;700&display=swap"><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><link rel="stylesheet" href="/style.css"></head><body><header class="top">
-  <div>
-    <h1>Uzum Kartochka Studiyasi</h1>
-    <p>Fon rasmini ChatGPT'dan yozuvsiz oling, yozuvlar va kartalarni shu yerda qo'ying. O'lcham: 1080×1440 (3:4).</p>
-  </div>
-  <div class="actions">
-    <button class="btn primary" id="dlOne">Shu rasmni yuklab olish</button>
-    <button class="btn" id="dlAll">Hammasini ZIP qilib olish</button>
-  </div>
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Uzum Kartochka Studiyasi</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="stylesheet" href="/studio.css">
+</head>
+<body>
+<header class="top">
+  <h1>Uzum Kartochka Studiyasi</h1>
+  <p>Model nomini yozing va suratini yuklang. Ma'lumotni, matnni va rasmlarni AI o'zi tayyorlaydi. Yoqmagan rasm tagiga e'tirozingizni yozing, AI tuzatib beradi.</p>
 </header>
 
-<div class="wrap">
-  <section class="panel" id="aiPanel" aria-label="AI bilan yaratish">
-    <h2>AI bilan yaratish — model nomini yozing, kartochka o'zi tuziladi</h2>
-    <div class="ai-grid">
-      <label>Mahsulot nomi va xususiyatlari<textarea id="aiInput" rows="2" placeholder='ASUS ExpertBook B1503CVA Intel Core 5 120U 16GB DDR5 512GB 15.6" Full HD Gentle Grey'></textarea></label>
-      <label>Qo'shimcha izoh (ixtiyoriy)<input id="aiNotes" placeholder="Masalan: ofis xodimlari va talabalar uchun"></label>
-      <label>Rasmlar soni<select id="aiCount"><option>4</option><option selected>5</option><option>6</option><option>8</option></select></label>
-      <div class="btns"><button class="btn primary" id="aiGo">Kartochkani yaratish</button><button class="btn" id="aiStop" hidden>To'xtatish</button></div>
+<main>
+  <section class="box" id="inputBox">
+    <label class="f">Mahsulot modeli
+      <input id="name" placeholder='ASUS ExpertBook B1503CVA Intel Core 5 120U 16GB 512GB 15.6"'>
+    </label>
+
+    <div class="row2">
+      <div class="f">Mahsulot surati (oq fonda, 1–3 ta)
+        <label class="drop" id="photoDrop"><input type="file" id="photos" accept="image/*" multiple hidden><span>Suratni tanlang yoki shu yerga tashlang</span></label>
+        <div class="thumbs" id="photoThumbs"></div>
+      </div>
+      <div class="f">Brend logotipi (ixtiyoriy)
+        <label class="drop" id="logoDrop"><input type="file" id="logo" accept="image/*" hidden><span>Logotip rasmini tanlang</span></label>
+        <div class="thumbs" id="logoThumb"></div>
+        <small class="hint" id="logoHint"></small>
+      </div>
     </div>
-    <div class="btns">
-      <button class="btn primary" id="aiGenImgs" hidden>Rasmlarni AI bilan yaratish</button>
-      <button class="btn" id="aiAllPrompts">1. Barcha promptlarni nusxalash (ChatGPT uchun)</button>
-      <label class="btn" id="aiPlaceLbl">2. ChatGPT rasmlarini yuklash — AI o'zi joylaydi<input type="file" id="aiPlace" accept="image/*" multiple hidden></label>
-      <button class="btn" id="aiReview">3. AI tekshiruvi va tuzatish</button>
-      <button class="btn ghost" id="aiUndo" hidden>Oxirgi AI o'zgarishini bekor qilish</button>
+
+    <label class="f">Qo'shimcha istak (ixtiyoriy)
+      <input id="notes" placeholder="Masalan: talabalar va ofis xodimlari uchun, ko'k rangda">
+    </label>
+
+    <div class="row3">
+      <label class="f">Rasmlar soni
+        <select id="count"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
+      </label>
+      <label class="f">Sifat
+        <select id="quality"><option value="medium">O'rtacha (arzonroq)</option><option value="high" selected>Yuqori (aniqroq yozuv)</option></select>
+      </label>
+      <label class="f">Studiya paroli
+        <input id="pass" type="password" autocomplete="current-password">
+      </label>
     </div>
-    <p class="hint" id="aiStatus" aria-live="polite"></p>
-    <div id="aiReport" hidden></div>
-    <details id="listing" hidden><summary>Uzum uchun nom, tavsif va xususiyatlar (UZ / RU)</summary><div id="listingBody"></div></details>
+
+    <details class="more">
+      <summary>Qo'shimcha sozlamalar</summary>
+      <div class="row3">
+        <label class="f">Rasm modeli<select id="imgModel"></select></label>
+        <label class="f">Matn modeli<select id="chatModel"></select></label>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="btn primary" id="go">Kartochkalarni yaratish</button>
+      <button class="btn" id="stop" hidden>To'xtatish</button>
+      <button class="btn ghost" id="reset">Yangi mahsulot</button>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
   </section>
-</div>
 
-<main class="app">
-  <section class="panel" id="brandPanel" aria-label="Brend sozlamalari"></section>
-
-  <section id="stage" aria-label="Ko'rinish">
-    <canvas id="cv" width="1080" height="1440"></canvas>
-    <div class="strip" id="strip"></div>
+  <section id="cardsBox" hidden>
+    <div class="bar">
+      <h2>Rasmlar</h2>
+      <button class="btn" id="zip">Hammasini ZIP qilib olish</button>
+    </div>
+    <div class="cards" id="cards"></div>
   </section>
 
-  <section class="panel" id="editorPanel" aria-label="Rasm muharriri"></section>
+  <section class="box" id="listingBox" hidden>
+    <h2>Uzum uchun nom va tavsif</h2>
+    <div id="listing"></div>
+  </section>
+
+  <section class="box" id="factsBox" hidden>
+    <details>
+      <summary>Topilgan ma'lumotlar va manbalar</summary>
+      <div id="facts"></div>
+    </details>
+  </section>
 </main>
 
 <div id="toast" hidden></div>
-<div id="modal" hidden><div class="box"><div class="ed-top"><strong>Rasmlarni saqlash</strong><button class="btn sm" id="mClose">Yopish</button></div><div id="modalBody"></div></div></div>
-<input type="file" id="loadJson" accept=".json,application/json" hidden><script src="/app1.js"></script><script src="/app2.js"></script><script src="/app3.js"></script><script src="/app4.js"></script><script src="/app5.js"></script><script src="/app6.js"></script><script src="/app7.js"></script></body></html>
+<script src="/studio.js"></script>
+</body>
+</html>

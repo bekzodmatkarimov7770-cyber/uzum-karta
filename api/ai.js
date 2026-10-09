@@ -79,28 +79,40 @@ async function image(H, b) {
   const model = checkModel(b.model, IMG_RE);
   const size = SIZES.has(b.size) ? b.size : 'auto';
   const quality = QUALITY.has(b.quality) ? b.quality : 'auto';
+  const format = b.format === 'jpeg' ? 'jpeg' : 'png';
   const prompt = String(b.prompt || '').slice(0, 30000);
-  const refs = (Array.isArray(b.refs) ? b.refs : []).filter(Boolean).slice(0, 4);
+  const refs = (Array.isArray(b.refs) ? b.refs : []).filter(Boolean).slice(0, 6);
   let j;
   if (refs.length) {
-    const fd = new FormData();
-    fd.append('model', model);
-    fd.append('prompt', prompt);
-    fd.append('size', size);
-    fd.append('quality', quality);
-    refs.forEach((u, i) => {
-      const blob = dataUrlToBlob(u);
-      fd.append('image[]', blob, `ref${i}.${(blob.type.split('/')[1] || 'png')}`);
-    });
-    const r = await fetch(OA + 'images/edits', { method: 'POST', headers: { Authorization: H.Authorization }, body: fd });
-    j = await r.json().catch(() => ({}));
-    if (!r.ok) throw fail(r.status, errMsg(j, r.status));
+    const send = async (fidelity) => {
+      const fd = new FormData();
+      fd.append('model', model);
+      fd.append('prompt', prompt);
+      fd.append('size', size);
+      fd.append('quality', quality);
+      if (format === 'jpeg') { fd.append('output_format', 'jpeg'); fd.append('output_compression', '92'); }
+      if (fidelity) fd.append('input_fidelity', 'high');
+      refs.forEach((u, i) => {
+        const blob = dataUrlToBlob(u);
+        fd.append('image[]', blob, `ref${i}.${(blob.type.split('/')[1] || 'png')}`);
+      });
+      const r = await fetch(OA + 'images/edits', { method: 'POST', headers: { Authorization: H.Authorization }, body: fd });
+      const out = await r.json().catch(() => ({}));
+      return { r, out };
+    };
+    let { r, out } = await send(!!b.fidelity);
+    // Ba'zi modellar input_fidelity ni qabul qilmaydi: o'shanda usiz qayta yuboramiz.
+    if (!r.ok && b.fidelity && /fidelity/i.test(errMsg(out, r.status))) ({ r, out } = await send(false));
+    if (!r.ok) throw fail(r.status, errMsg(out, r.status));
+    j = out;
   } else {
-    j = await oa('images/generations', H, { model, prompt, size, quality, n: 1 });
+    const payload = { model, prompt, size, quality, n: 1 };
+    if (format === 'jpeg') { payload.output_format = 'jpeg'; payload.output_compression = 92; }
+    j = await oa('images/generations', H, payload);
   }
   const b64 = j.data && j.data[0] && j.data[0].b64_json;
   if (!b64) throw fail(502, 'OpenAI rasm qaytarmadi');
-  return { dataUrl: 'data:image/png;base64,' + b64 };
+  return { dataUrl: `data:image/${format};base64,` + b64 };
 }
 
 const MAX_IMG = 8 * 1024 * 1024;
